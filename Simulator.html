@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- <style>
+      body {
+        margin: 0;
+      }
+      canvas {
+        width: 100vw;
+        height: 100vh;
+        display: block;
+      }
+    </style> -->
+    <title>Flight Simulator</title>
+    <script id="vertex-shader" type="x-shader/x-vertex">
+        #version 300 es
+        in vec4 vPosition;
+        uniform vec4 uColor;
+      uniform mat4 p,mv;
+        out vec4 color;
+        void main()
+        {
+            gl_Position = p*mv*vPosition;
+            color = uColor;
+            gl_PointSize = 5.0;
+        }
+    </script>
+    <script id="fragment-shader" type="x-shader/x-fragment">
+      #version 300 es
+      precision lowp float;  // lowp, mediump
+
+      in vec4 color;  // Input Vec4 Color Attribute from vector shader
+      out vec4 fragColor;  // Ouput Vec4 Fragment Color
+
+      void main()
+      {
+      fragColor = color;
+      }
+    </script>
+    <script src="http://interactivecomputergraphics.com/8E/Code%20update/Common/initShadersES6.js"></script>
+    <script src="http://interactivecomputergraphics.com/8E/Code%20update/Common/MVES6.js"></script>
+    <script type="text/javascript" src="Simulator.js"></script>
+    <script type="text/javascript" src="terrain.js"></script>
+  </head>
+  <body>
+    <canvas id="gl-canvas" width="512" height="512">
+      Oops ... your browser doesn't support the HTML5 canvas element
+    </canvas>
+  </body>
+</html>
