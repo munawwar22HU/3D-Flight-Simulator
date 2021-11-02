@@ -4,9 +4,44 @@ let points = [];
 let program;
 let color;
 let shapes;
+let canvas;
+
+
+const eye = vec3(
+    7.0*Math.sin(60)*Math.cos(60),
+    7.0*Math.sin(60)*Math.sin(60),
+    7.0*Math.cos(60)
+);
+// const eye = vec3(0.0, 5.0, 10)
+const at = vec3(0.0, 0.0, 0.0);
+const up = vec3(0.0, 1.0, 0.0);
+
+//Handling Key Presses 
+//True when Key Pressed, False when released. 
+const keyMaps = {
+    'W': false, //Pitch up
+    'S': false, //Pitch down
+    'A': false, //Yaw left
+    'D': false, //Yaw right 
+    'Q': false, //Roll L
+    'E': false, //Roll R
+    '5': false, '%': false, //Near
+    '6': false, '^': false, //Far
+    '1': false, '!': false, //Left
+    '2': false, '@': false, //right
+    '3': false, '#': false, //top
+    '4': false, '$': false, //bottom
+}
+
+// For perspective Proection 
+let near = 0.1;
+let far = 100.0;
+let fieldOfView = 35; 
+
+
 
 window.onload = function init() {
-  let canvas = document.getElementById("gl-canvas");
+ canvas = document.getElementById("gl-canvas");
   gl = canvas.getContext("webgl2");
   if (!gl) alert("WebGL 2.0 isn't available");
 
@@ -47,21 +82,8 @@ window.onload = function init() {
   gl.vertexAttribPointer(positionLoc, 4, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(positionLoc);
 
-  let projLoc = gl.getUniformLocation(program, "p");
-  let mvLoc = gl.getUniformLocation(program, "mv");
-  color = gl.getUniformLocation(program, "uColor");
-
-  // Projection Matrix
-  let p = perspective(40, canvas.clientWidth / canvas.clientHeight, 0.1, 100.0);
-
-  gl.uniformMatrix4fv(projLoc, gl.FALSE, flatten(p));
-
-  var eye = vec3(0.0, 5.0, 10);
-  var at = vec3(0.0, 0.0, 0.0);
-  var up = vec3(0.0, 1.0, 0.0);
-  // Modelview Matrix
-  let mv = lookAt(eye, at, up);
-  gl.uniformMatrix4fv(mvLoc, gl.FALSE, flatten(mv));
+  document.onkeydown = keyPressHandler;
+  document.onkeyup = keyReleaseHandler; 
 
   render();
 };
@@ -85,6 +107,78 @@ function render() {
 
 //   gl.uniform4f(color, 1, 1, 1, 1);
 //   gl.drawArrays(gl.TRIANGLES, shapes.hmap.Start, shapes.hmap.Vertices);
+
+  let projLoc = gl.getUniformLocation(program, "p");
+  let mvLoc = gl.getUniformLocation(program, "mv");
+  color = gl.getUniformLocation(program, "uColor");
+
+  // Projection Matrix
+  let p = perspective(fieldOfView, canvas.clientWidth / canvas.clientHeight, near, far);
+  // let p = frustum(-1.0, 1.0, -1.0, 1.0, -0.0, 0.0)
+
+  gl.uniformMatrix4fv(projLoc, gl.FALSE, flatten(p));
+
+
+  // Modelview Matrix
+  let mv = lookAt(eye, at, up);
+  gl.uniformMatrix4fv(mvLoc, gl.FALSE, flatten(mv));
   gl.uniform4f(color, 0, 0, 0, 1);
   gl.drawArrays(gl.POINTS, shapes.hmapWires.Start, shapes.hmapWires.Vertices);
 }
+
+const keyPressHandler = ((e) => {
+  keyMaps[e.key.toUpperCase()] = true;
+  updateView();
+   render();
+  // console.log(e.key);
+  // console.log(keyMaps)
+})
+
+const keyReleaseHandler = ((e) => {
+  keyMaps[e.key.toUpperCase()] = false;
+  
+  updateView();
+})
+
+const updateView = (() => {
+  if (keyMaps['W'] === true){
+    at[1] += 0.02; //Bound to be added
+  }
+  if (keyMaps['S'] === true){
+    at[1] -= 0.02;
+  }
+  if (keyMaps['Q'] === true){
+    up[2] -= 0.03;
+  }
+  if (keyMaps['E'] === true){
+    up[2] += 0.03;
+  }
+  if (keyMaps['A'] === true){
+    at[2] += 0.03; 
+  }
+  if (keyMaps['D'] === true){
+    at[2] -= 0.03;
+  }
+  if (keyMaps['5']== true || keyMaps['%'] == true){
+    fieldOfView -= 3;
+  }
+  if (keyMaps['6']== true || keyMaps['^'] == true){
+    fieldOfView += 3;
+  }
+  if (keyMaps['1']== true || keyMaps['!'] == true){
+    at[2] -= 0.3;
+  }
+  if (keyMaps['2']== true || keyMaps['@'] == true){
+    at[2] += 0.3;
+  }
+  if (keyMaps['3']== true || keyMaps['#'] == true){
+    at[1] += 0.3;
+  }
+  if (keyMaps['4']== true || keyMaps['$'] == true){
+    at[1] -= 0.3;
+  }
+
+})
+
+
+
