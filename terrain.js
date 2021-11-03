@@ -1,10 +1,8 @@
 // https://www.cs.uregina.ca/Links/class-info/315/WebGL/Lab4/
 function get_patch(xmin, xmax, zmin, zmax) {
   let ret = [];
-  const xDivs = 23;
-  const zDivs = 23;
-  let dx = (xmax - xmin) / xDivs;
-  let dz = (zmax - zmin) / zDivs;
+  let dx = 0.05; //(xmax - xmin) / xDivs;
+  let dz = 0.05; //(zmax - zmin) / zDivs;
 
   for (let x = xmin; x < xmax; x += dx) {
     for (let z = zmin; z < zmax; z += dz) {
@@ -21,4 +19,18 @@ function get_patch(xmin, xmax, zmin, zmax) {
     }
   }
   return ret;
+}
+
+// Converts triangles to Wireframes
+function TrianglesToWireframe(Vertices) {
+  var res = [];
+  for (var i = 0x0; i < Vertices.length; i += 3) {
+    res.push(Vertices[i]);
+    res.push(Vertices[i + 1]);
+    res.push(Vertices[i + 1]);
+    res.push(Vertices[i + 2]);
+    res.push(Vertices[i + 2]);
+    res.push(Vertices[i]);
+  }
+  return res;
 }

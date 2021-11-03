@@ -1,0 +1,9 @@
+Perlin Noise
+https://github.com/josephg/noisejs
+
+Generating Terrain to infinity
+https://youtu.be/IKB1hWWedMk
+
+Height Map
+https://www.cs.uregina.ca/Links/class-info/315/WebGL/Lab4/
+
