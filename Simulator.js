@@ -1,65 +1,36 @@
 "use strict";
-let gl;
-let points = [];
-let program;
-let color;
-let shapes;
-let canvas;
-let vBuffer;
-let offset = 0;
+// WebGL Variables
+let program, canvas, gl;
+// Terrain Bounds
+let xmin, xmax, zmin, zmax;
+xmin = -5;
+xmax = 5;
+zmin = -5;
+zmax = 5;
+var speed = vec3(0, 0, -0.001);
 
-// const eye = vec3(
-//   6.0 * Math.sin(55) * Math.cos(50),
-//   7.0 * Math.sin(50) * Math.sin(55),
-//   7.0 * Math.cos(45)
-// );
+// Cordinate Arrays
+let vertices = [];
+let colors = [];
+let normals = [];
+// Perspective Projection
+let near = 0.1;
+let far = 100.0;
+let fov = 45;
+let aspect;
 var radius = 6.0;
 var theta = 55.0;
 var phi = 50;
-
-const eye = vec3(
-  radius * Math.sin(theta) * Math.cos(phi),
-  radius * Math.sin(theta) * Math.sin(phi),
-  radius * Math.cos(theta)
-);
-// const eye = vec3(0.0, 5.0, 10)
-const at = vec3(0.0, 0.0, 0.0);
-const up = vec3(0.0, 1.0, 0.0);
-
-//Handling Key Presses
-//True when Key Pressed, False when released.
-const keyMaps = {
-  W: false, //Pitch up
-  S: false, //Pitch down
-  A: false, //Yaw left
-  D: false, //Yaw right
-  Q: false, //Roll L
-  E: false, //Roll R
-  5: false,
-  "%": false, //Near
-  6: false,
-  "^": false, //Far
-  1: false,
-  "!": false, //Left
-  2: false,
-  "@": false, //right
-  3: false,
-  "#": false, //top
-  4: false,
-  $: false, //bottom
-};
-
-// For perspective Proection
-let near = 0.1;
-let far = 200;
-let fieldOfView = 45.5;
+// Model View Project
+var eye = vec3(0, 1, 0);
+var up = vec3(0.0, 1.0, 0.0);
 
 window.onload = function init() {
   canvas = document.getElementById("gl-canvas");
   gl = canvas.getContext("webgl2");
-  if (!gl) alert("WebGL 2.0 isn't available");
+  if (!gl) alert("WebGL 2.0 isn't availaible");
 
-  gl.viewport(0, 0, canvas.width, canvas.height);
+  gl.viewport(0, 0, canvas.clientWidth, canvas.clientHeight);
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
   gl.enable(gl.DEPTH_TEST);
@@ -67,155 +38,84 @@ window.onload = function init() {
   program = initShaders(gl, "vertex-shader", "fragment-shader");
   gl.useProgram(program);
 
-  points = get_patch(-5, 5, -10, 10);
+  vertices = get_patch(xmin, xmax, zmin, zmax);
 
-  shapes = {};
-  shapes.hmap = {};
-  shapes.hmap.Start = 0;
-  shapes.hmap.Vertices = points.length;
+  get_height();
+  load_buffer();
+  render();
+};
 
-  noise.seed(10);
+function get_patch(minX, maxX, minZ, maxZ) {
+  let ret = [];
+  let dx = 0.2;
+  let dz = 0.2;
 
-  for (var i = 0; i < points.length; i++) {
-    points[i][1] = noise.perlin2(points[i][0], points[i][2]);
+  for (let x = xmin; x <= xmax; x += dx) {
+    for (let z = zmin; z <= zmax; z += dz) {
+      // Triangle 1
+      // (x,z) (x,z+dz),(x+dx,z+dz)
+
+      ret.push(vec4(x, 0, z, 1));
+      ret.push(vec4(x + dx, 0, z + dz, 1));
+      ret.push(vec4(x + dx, 0, z, 1));
+
+      ret.push(vec4(x, 0, z, 1));
+      ret.push(vec4(x, 0, z + dz, 1));
+      ret.push(vec4(x + dx, 0, z + dz, 1));
+      // Triangle 2
+      // (x,z) (x+dx,z),(x+dx,z+dz)
+
+      colors.push(vec4(1.0, 1.0, 1.0, 1.0));
+      colors.push(vec4(1.0, 1.0, 1.0, 1.0));
+
+      colors.push(vec4(1.0, 1.0, 1.0, 1.0));
+      colors.push(vec4(1.0, 1.0, 1.0, 1.0));
+
+      colors.push(vec4(1.0, 1.0, 1.0, 1.0));
+      colors.push(vec4(1.0, 1.0, 1.0, 1.0));
+    }
   }
+  return ret;
+}
 
-  shapes.hmapWires = {};
-  shapes.hmapWires.Start = points.length;
-  points = points.concat(TrianglesToWireframe(points));
-  shapes.hmapWires.Vertices = points.length - shapes.hmapWires.Start;
+function get_height() {
+  noise.seed(42);
+  for (let i = 0; i < vertices.length; i++) {
+    vertices[i][1] = noise.perlin2(vertices[i][0], vertices[i][2]);
+  }
+}
 
-  console.log(points);
+function load_buffer() {
+  gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+  gl.bufferData(gl.ARRAY_BUFFER, flatten(vertices), gl.STATIC_DRAW);
 
-  vBuffer = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, vBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, points.length * 6 * 4, gl.STATIC_DRAW);
   let positionLoc = gl.getAttribLocation(program, "vPosition");
   gl.vertexAttribPointer(positionLoc, 4, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(positionLoc);
 
-  document.onkeydown = keyPressHandler;
-  document.onkeyup = keyReleaseHandler;
-
-  render();
-};
-
-// Converts triangles to Wireframes
-function TrianglesToWireframe(Vertices) {
-  var res = [];
-  for (var i = 0x0; i < Vertices.length; i += 3) {
-    res.push(Vertices[i]);
-    res.push(Vertices[i + 1]);
-    res.push(Vertices[i + 1]);
-    res.push(Vertices[i + 2]);
-    res.push(Vertices[i + 2]);
-    res.push(Vertices[i]);
-  }
-  return res;
+  gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+  gl.bufferData(gl.ARRAY_BUFFER, flatten(colors), gl.STATIC_DRAW);
+  let colorLoc = gl.getAttribLocation(program, "uColor");
+  gl.vertexAttribPointer(colorLoc, 4, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(colorLoc);
 }
-
+var look_at;
 function render() {
-  offset += 1;
-  console.log(offset);
+  var direction = normalize(new vec3(speed));
+  console.log(look_at);
+
+  look_at = add(eye, direction);
   gl.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT);
-
-  noise.seed(10);
-
-  points = get_patch(-5, 5, -10, 10);
-
-  shapes = {};
-  shapes.hmap = {};
-  shapes.hmap.Start = 0;
-  shapes.hmap.Vertices = points.length;
-
-  for (var i = 0; i < points.length; i++) {
-    points[i][1] = noise.perlin2(points[i][0] + offset, points[i][2]);
-  }
-
-  shapes.hmapWires = {};
-  shapes.hmapWires.Start = points.length;
-  points = points.concat(TrianglesToWireframe(points));
-  shapes.hmapWires.Vertices = points.length - shapes.hmapWires.Start;
-
   let projLoc = gl.getUniformLocation(program, "p");
   let mvLoc = gl.getUniformLocation(program, "mv");
-  color = gl.getUniformLocation(program, "uColor");
-
-  // Projection Matrix
-  let p = perspective(
-    fieldOfView,
-    canvas.clientWidth / canvas.clientHeight,
-    near,
-    far
-  );
-  // let p = frustum(-1.0, 1.0, -1.0, 1.0, -0.0, 0.0)
-
-  gl.uniformMatrix4fv(projLoc, gl.FALSE, flatten(p));
-
-  gl.bindBuffer(gl.ARRAY_BUFFER, vBuffer);
-  gl.bufferSubData(gl.ARRAY_BUFFER, 0, flatten(points));
-
-  // Modelview Matrix
-  let mv = lookAt(eye, at, up);
+  let mv = lookAt(eye, look_at, up);
+  console.log(mv);
   gl.uniformMatrix4fv(mvLoc, gl.FALSE, flatten(mv));
-  //gl.uniform4f(color, 0, 0, 0, 1);
-  gl.uniform4f(color, 1, 1, 1, 1);
-  gl.drawArrays(gl.LINES, shapes.hmapWires.Start, shapes.hmapWires.Vertices);
-  // gl.uniform4f(color, 1, 1, 1, 1);
-  // gl.drawArrays(gl.TRIANGLES, shapes.hmap.Start, shapes.hmap.Vertices);
+  let p = perspective(fov, canvas.width / canvas.height, near, far);
+  gl.uniformMatrix4fv(projLoc, gl.FALSE, flatten(p));
+  gl.drawArrays(gl.LINES, 0, vertices.length);
+
+  eye = add(speed, eye);
 
   requestAnimationFrame(render);
 }
-
-const keyPressHandler = (e) => {
-  keyMaps[e.key.toUpperCase()] = true;
-  updateView();
-  render();
-  // console.log(e.key);
-  // console.log(keyMaps)
-};
-
-const keyReleaseHandler = (e) => {
-  keyMaps[e.key.toUpperCase()] = false;
-
-  updateView();
-};
-
-const updateView = () => {
-  if (keyMaps["W"] === true) {
-    at[1] += 0.02; //Bound to be added
-  }
-  if (keyMaps["S"] === true) {
-    at[1] -= 0.02;
-  }
-  if (keyMaps["Q"] === true) {
-    up[2] -= 0.03;
-  }
-  if (keyMaps["E"] === true) {
-    up[2] += 0.03;
-  }
-  if (keyMaps["A"] === true) {
-    at[2] += 0.03;
-  }
-  if (keyMaps["D"] === true) {
-    at[2] -= 0.03;
-  }
-  if (keyMaps["5"] == true || keyMaps["%"] == true) {
-    fieldOfView -= 3;
-  }
-  if (keyMaps["6"] == true || keyMaps["^"] == true) {
-    fieldOfView += 3;
-  }
-  if (keyMaps["1"] == true || keyMaps["!"] == true) {
-    at[2] -= 0.3;
-  }
-  if (keyMaps["2"] == true || keyMaps["@"] == true) {
-    at[2] += 0.3;
-  }
-  if (keyMaps["3"] == true || keyMaps["#"] == true) {
-    at[1] += 0.3;
-  }
-  if (keyMaps["4"] == true || keyMaps["$"] == true) {
-    at[1] -= 0.3;
-  }
-};

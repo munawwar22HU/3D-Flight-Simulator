@@ -1,8 +1,8 @@
 // https://www.cs.uregina.ca/Links/class-info/315/WebGL/Lab4/
 function get_patch(xmin, xmax, zmin, zmax) {
   let ret = [];
-  let dx = 0.05; //(xmax - xmin) / xDivs;
-  let dz = 0.05; //(zmax - zmin) / zDivs;
+  let dx = 0.2; //(xmax - xmin) / xDivs;
+  let dz = 0.2; //(zmax - zmin) / zDivs;
 
   for (let x = xmin; x < xmax; x += dx) {
     for (let z = zmin; z < zmax; z += dz) {
