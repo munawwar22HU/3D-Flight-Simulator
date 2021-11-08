@@ -92,7 +92,8 @@ function get_patch(minX, maxX, minZ, maxZ) {
 function get_height() {
   noise.seed(42);
   for (let i = 0; i < vertices.length; i++) {
-    vertices[i][1] = noise.perlin2(vertices[i][0], vertices[i][2]);
+    let height = noise.perlin2(vertices[i][0], vertices[i][2]);
+    vertices[i][1] = height > 0 ? height : 0 ;
   }
 }
 
