@@ -66,5 +66,10 @@ const keyPressHandler = ((e) => {
     if (keyMaps['4']== true || keyMaps['$'] == true){
       if (look_at[1] > -1.5) {look_at[1] -= 0.3;}
     }
-  
+    if (keyMaps['ArrowUp'] === true){
+        speed[2] += 0.03;
+    }
+    if (keyMaps['ArrowDown'] === true){
+        speed[2] -= 0.03;
+    }
   })
