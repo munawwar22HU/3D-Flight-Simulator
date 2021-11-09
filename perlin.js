@@ -326,9 +326,11 @@
 
     // Compute the fade curve value for x
     var u = fade(x);
-
+    var changeInX = -n00 + n01 + (y*n00) - (y*n01) - (y*n10) + (y*n11);
+    var changeInZ = -n00 + (x*n00) - (x*n01) + n10 - (x*n10) + (x*n11);
+    
     // Interpolate the four results
-    return lerp(lerp(n00, n10, u), lerp(n01, n11, u), fade(y));
+    return [lerp(lerp(n00, n10, u), lerp(n01, n11, u), fade(y)), vec3(-changeInX, 1, -changeInZ)] ;
   };
 
   // 3D Perlin Noise
