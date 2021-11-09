@@ -14,13 +14,7 @@ let keyMaps;
 let vertices = [];
 let colors = [];
 let normals = [];
-// Perspective Projection
 
-let fov = 45;
-let aspect;
-var radius = 6.0;
-var theta = 55.0;
-var phi = 50;
 // Model View Project
 
 let eye = vec3(0.0, 1.0, 0.0);
@@ -39,7 +33,7 @@ let center = vec2(0, 0);
 let patchsize = 5;
 let camera;
 let depth = 0.1;
-
+// Frustrum Projection
 let sTop = 1;
 let sright = 1;
 let sfar = -1;
@@ -47,10 +41,10 @@ let sfar = -1;
 let sbottom = -1;
 let sleft = -1;
 let snear = 1;
-
+// Toggle Shadding 
 let mode = 0;
+// Toggle Terrain
 let wiremode = 0;
-// 0 
 
 window.onload = function init() {
   canvas = document.getElementById("gl-canvas");
@@ -62,17 +56,9 @@ window.onload = function init() {
 
   gl.enable(gl.DEPTH_TEST);
 
-  if (mode == 0) {
-    program = initShaders(gl, "vertex-shader-f", "fragment-shader-f");
-  }
+  // 
 
-  if (mode == 1) {
-    program = initShaders(gl, "vertex-shader-s", "fragment-shader-s");
-  }
-  if (mode == 2) {
-    program = initShaders(gl, "vertex-shader-p", "fragment-shader-p");
-  }
-
+  toggle_shaders();
 
 
   gl.useProgram(program);
@@ -89,6 +75,20 @@ window.onload = function init() {
   load_buffer();
   render();
 };
+
+function toggle_shaders() {
+  if (mode == 0) {
+    program = initShaders(gl, "vertex-shader-f", "fragment-shader-f");
+  }
+
+  if (mode == 1) {
+    program = initShaders(gl, "vertex-shader-s", "fragment-shader-s");
+  }
+  if (mode == 2) {
+    program = initShaders(gl, "vertex-shader-p", "fragment-shader-p");
+  }
+}
+
 
 function get_patch(minX, maxX, minZ, maxZ) {
   let ret = [];
@@ -196,6 +196,12 @@ function render() {
   gl.uniformMatrix4fv(projLoc, gl.FALSE, flatten(p));
   gl.uniformMatrix4fv(mvLoc, gl.FALSE, flatten(mv));
 
+
+  toggle_terrain();
+  requestAnimationFrame(render);
+}
+
+function toggle_terrain() {
   if (wiremode == 2) {
 
     gl.drawArrays(gl.TRIANGLES, 0, vertices.length);
@@ -211,10 +217,7 @@ function render() {
   }
 
 
-
-  requestAnimationFrame(render);
 }
-
 function frustum(left, right, bottom, top, near, far) {
 
   if (left == right) { throw "frustum(): left and right are equal"; }

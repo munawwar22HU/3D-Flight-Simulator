@@ -1,6 +1,6 @@
 keyMaps = {
-  V: false,
-  C: false,
+  V: false,// Terrain
+  C: false,// Shading
   W: false, //Pitch up
   S: false, //Pitch down
   A: false, //Yaw left
@@ -60,6 +60,7 @@ const updateView = () => {
     if (mode == 2) {
       wiremode = 2;
     }
+    toggle_shaders();
   }
   if (keyMaps["W"] === true) {
     at_vec[1] += 0.03;
