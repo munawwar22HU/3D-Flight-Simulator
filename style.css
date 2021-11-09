@@ -1,0 +1,46 @@
+/* Styles.css */
+body {
+  background-color: #d8d8d8;
+}
+
+canvas {
+  display: block;
+  background-color: #bbbbbb;
+}
+
+#canvas-holder {
+  display: inline-block;
+  border: 2px solid black;
+  margin: 0;
+  padding: 0;
+}
+
+#controls {
+  display: inline-block;
+  background-color: white;
+  border-left: 2px solid black;
+  border-right: 2px solid black;
+  border-top: 2px solid black;
+  padding: 0;
+  margin-right: 10px;
+}
+
+#controls p {
+  margin: 12px 0;
+  white-space: nowrap;
+}
+
+div.group {
+  padding: 0 8px;
+  border-bottom: 2px solid black;
+}
+
+#imagediv p {
+  margin: 4px 0;
+  white-space: nowrap;
+}
+
+#imagediv {
+  margin-left: 20px;
+  padding: 0;
+}

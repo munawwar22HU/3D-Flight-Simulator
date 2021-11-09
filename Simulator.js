@@ -7,15 +7,27 @@ xmin = -5;
 xmax = 5;
 zmin = -5;
 zmax = 5;
+var speed = vec3(0, 0.0, -0.01);
+let keyMaps;
+
 // Cordinate Arrays
 let vertices = [];
-let normals = [];
 let colors = [];
+let normals = [];
+// Perspective Projection
+
+let fov = 45;
+let aspect;
+var radius = 6.0;
+var theta = 55.0;
+var phi = 50;
 // Model View Project
+
 let eye = vec3(0.0, 1.0, 0.0);
 let up = vec3(0.0, 1.0, 0.0);
 let look_at = vec3(0.0, 0.0, 0.0);
-// Shader Variables
+let at_vec = vec3(0.0, -0.2, -0.5);
+let direction;
 let p;
 let mv;
 let normalMat;
@@ -27,32 +39,17 @@ let center = vec2(0, 0);
 let patchsize = 5;
 let camera;
 let depth = 0.8;
-// Perspective Projection
+
 let sTop = 1;
 let sright = 1;
 let sfar = -1;
+
 let sbottom = -1;
 let sleft = -1;
 let snear = 1;
-// Toggle Shading
-let mode = 1;
-// 0 - Flat
-// 1 - Smooth
-// 2 - Phong
-// Toggle Terrain
-let wiremode = 2;
-// 0 - Points
-// 1 - Wireframes
-// 2 - Faces
 
-// 0 -> 0 , 1 , 2
-// 1 -> 0 , 1, 2
-// 2 -> 2
-
-let at_vec = vec3(0.0, -0.2, -0.5);
-let direction;
-let speed = vec3(0, 0.0, -0.02);
-let keyMaps;
+let mode = 2;
+let wiremode = 1;
 
 window.onload = function init() {
   canvas = document.getElementById("gl-canvas");
@@ -64,17 +61,16 @@ window.onload = function init() {
 
   gl.enable(gl.DEPTH_TEST);
 
-  if (mode == 0) {
-    program = initShaders(gl, "vertex-shader-f", "fragment-shader-f");
-  }
-  if (mode == 1) {
+  if (mode==0){
     program = initShaders(gl, "vertex-shader-s", "fragment-shader-s");
   }
-  if (mode == 2) {
+  if (mode==1){
     program = initShaders(gl, "vertex-shader-p", "fragment-shader-p");
   }
 
-
+  if (mode==2){
+    program = initShaders(gl, "vertex-shader-f", "fragment-shader-f");
+  }
 
   gl.useProgram(program);
 
@@ -82,8 +78,9 @@ window.onload = function init() {
 
   document.onkeydown = keyPressHandler;
   document.onkeyup = keyReleaseHandler;
+
   for (let i = 0; i < vertices.length; i++) {
-    normals = vec3(0.0, 0.0, 0.0);
+    normals = vec3 (0.0,0.0,0.0);
   }
   get_height();
   load_buffer();
@@ -109,10 +106,13 @@ function get_patch(minX, maxX, minZ, maxZ) {
       ret.push(vec4(x + dx, 0, z + dz, 1));
       // Triangle 2
       // (x,z) (x+dx,z),(x+dx,z+dz)
+
       colors.push(vec4(1.0, 1.0, 1.0, 1.0));
       colors.push(vec4(1.0, 1.0, 1.0, 1.0));
+
       colors.push(vec4(1.0, 1.0, 1.0, 1.0));
       colors.push(vec4(1.0, 1.0, 1.0, 1.0));
+
       colors.push(vec4(1.0, 1.0, 1.0, 1.0));
       colors.push(vec4(1.0, 1.0, 1.0, 1.0));
     }
@@ -120,16 +120,16 @@ function get_patch(minX, maxX, minZ, maxZ) {
   return ret;
 }
 
-// Return height map for a set of given vertices
 function get_height() {
-  noise.seed(6);
+  noise.seed(42);
   for (let i = 0; i < vertices.length; i++) {
     let res = noise.perlin2(vertices[i][0], vertices[i][2]);
-    vertices[i][1] = res[0];
-    normals[i] = res[1];;
+    let height = res[0];
+    vertices[i][1] = height //> 0 ? height : 0;
+    normals[i]= res[1];;
   }
 }
-// Check if new terrain is to be generated and then generate new terrain
+
 function update_terrain() {
   let camera = vec2(eye[0], eye[2]);
   let distFromPatch = length(subtract(camera, center));
@@ -146,7 +146,7 @@ function update_terrain() {
     load_buffer();
   }
 }
-// Load data into buffers
+
 function load_buffer() {
   gl.flush();
   gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
@@ -159,21 +159,22 @@ function load_buffer() {
   gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
   gl.bufferData(gl.ARRAY_BUFFER, flatten(normals), gl.STATIC_DRAW);
 
-  if (mode != 2) {
+  if (mode != 1){
     let normalLoc = gl.getAttribLocation(program, "Vnormal");
     gl.vertexAttribPointer(normalLoc, 3, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(normalLoc);
   }
+
   gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
   gl.bufferData(gl.ARRAY_BUFFER, flatten(colors), gl.STATIC_DRAW);
   let colorLoc = gl.getAttribLocation(program, "uColor");
   gl.vertexAttribPointer(colorLoc, 4, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(colorLoc);
-
 }
 
 function render() {
   update_terrain();
+  // console.log(up);
   eye = add(eye, speed);
 
   look_at = add(eye, at_vec);
@@ -182,7 +183,7 @@ function render() {
   projLoc = gl.getUniformLocation(program, "p");
   mv = lookAt(eye, look_at, up);
   mvLoc = gl.getUniformLocation(program, "mv");
-  if (mode != 1) {
+  if (mode!=1){
     normLoc = gl.getUniformLocation(program, "normMat");
     normalMat = normalMatrix(mv, false);
     gl.uniformMatrix3fv(normLoc, gl.FALSE, flatten(normalMat));
@@ -191,25 +192,20 @@ function render() {
 
   gl.uniformMatrix4fv(projLoc, gl.FALSE, flatten(p));
   gl.uniformMatrix4fv(mvLoc, gl.FALSE, flatten(mv));
-
-  // Points
-  if (wiremode == 0) {
-    gl.drawArrays(gl.POINTS, 0, vertices.length);
+  
+  if (wiremode==0){
+    for (let i = 0; i < vertices.length; i=i+3) {
+      gl.drawArrays( gl.TRIANGLES, i, 3 );
+    }
   }
-  // Wireframe
-  if (wiremode == 1) {
+
+  if (wiremode==1){
     gl.drawArrays(gl.LINES, 0, vertices.length);
   }
-  // Faces
-  if (wiremode == 2) {
 
-    gl.drawArrays(gl.TRIANGLES, 0, vertices.length);
-
+  if (wiremode==2){
+    gl.drawArrays(gl.POINTS, 0, vertices.length);
   }
-
-
-
-
 
 
 
