@@ -7,24 +7,26 @@ xmin = -5;
 xmax = 5;
 zmin = -5;
 zmax = 5;
-var speed = vec3(0, 0, -0.1);
+var speed = vec3(0, 0.0, -0.01);
+let keyMaps;
 
 // Cordinate Arrays
 let vertices = [];
 let colors = [];
 let normals = [];
 // Perspective Projection
-let near = -1;
-let far = 1;
+
 let fov = 45;
 let aspect;
 var radius = 6.0;
 var theta = 55.0;
 var phi = 50;
 // Model View Project
+
 let eye = vec3(0.0, 1.0, 0.0);
 let up = vec3(0.0, 1.0, 0.0);
-let look_at;
+let look_at = vec3(0.0, 0.0, 0.0);
+let at_vec = vec3(0.0, -0.2, -0.5);
 let direction;
 let p;
 let mv;
@@ -35,6 +37,14 @@ let center = vec2(0, 0);
 let patchsize = 5;
 let camera;
 let depth = 0.1;
+
+let sTop = 1;
+let sright = 1;
+let sfar = -1;
+
+let sbottom = -1;
+let sleft = -1;
+let snear = 1;
 
 window.onload = function init() {
   canvas = document.getElementById("gl-canvas");
@@ -50,9 +60,9 @@ window.onload = function init() {
   gl.useProgram(program);
 
   vertices = get_patch(xmin, xmax, zmin, zmax);
-  
+
   document.onkeydown = keyPressHandler;
-  document.onkeyup = keyReleaseHandler; 
+  document.onkeyup = keyReleaseHandler;
 
   get_height();
   load_buffer();
@@ -136,17 +146,59 @@ function load_buffer() {
 }
 
 function render() {
-  direction = normalize(new vec3(speed));
-  look_at = add(eye, direction);
+  update_terrain();
+  // console.log(up);
+  eye = add(eye, speed);
+
+  look_at = add(eye, at_vec);
   gl.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT);
+
   projLoc = gl.getUniformLocation(program, "p");
   mvLoc = gl.getUniformLocation(program, "mv");
   mv = lookAt(eye, look_at, up);
-  p = perspective(fov, canvas.width / canvas.height, near, far);
+  p = frustum(sleft, sright, sbottom, sTop, snear, sfar);
+
   gl.uniformMatrix4fv(projLoc, gl.FALSE, flatten(p));
   gl.uniformMatrix4fv(mvLoc, gl.FALSE, flatten(mv));
+
   gl.drawArrays(gl.LINES, 0, vertices.length);
-  eye = add(speed, eye);
-  update_terrain();
+
+
   requestAnimationFrame(render);
+}
+
+function frustum(left, right, bottom, top, near, far) {
+
+  if (left == right) { throw "frustum(): left and right are equal"; }
+
+  if (bottom == top) { throw "frustum(): bottom and top are equal"; }
+
+  if (near == far) { throw "frustum(): near and far are equal"; }
+
+  let w = right - left;
+
+  let h = top - bottom;
+
+  let d = far - near;
+
+  let result = mat4();
+
+  result[0][0] = 2.0 * near / w;
+
+  result[1][1] = 2.0 * near / h;
+
+  result[2][2] = -(far + near) / d;
+
+  result[0][2] = (right + left) / w;
+
+  result[1][2] = (top + bottom) / h;
+
+  result[2][3] = -2 * far * near / d;
+
+  result[3][2] = -1;
+
+  result[3][3] = 0.0;
+
+  return result;
+
 }
