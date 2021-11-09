@@ -7,7 +7,7 @@ xmin = -5;
 xmax = 5;
 zmin = -5;
 zmax = 5;
-var speed = vec3(0, 0, -0.01);
+var speed = vec3(0, 0, -0.1);
 
 // Cordinate Arrays
 let vertices = [];
