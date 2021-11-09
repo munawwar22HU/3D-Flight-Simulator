@@ -92,10 +92,10 @@ function get_patch(minX, maxX, minZ, maxZ) {
 function get_height() {
   noise.seed(42);
   for (let i = 0; i < vertices.length; i++) {
-    let res =  noise.perlin2(vertices[i][0], vertices[i][2])
+    let res = noise.perlin2(vertices[i][0], vertices[i][2]);
     let height = res[0];
-    vertices[i][1] = height > 0 ? height : 0 ;
-    normals.push(res[1]); 
+    vertices[i][1] = height > 0 ? height : 0;
+    normals.push(res[1]);
   }
 }
 
@@ -108,7 +108,8 @@ function update_terrain() {
     xmax = Math.floor(patchsize + center[0]);
     zmin = Math.floor(-patchsize + center[1]);
     zmax = Math.floor(patchsize + center[1]);
-
+    colors = [];
+    normals = [];
     vertices = get_patch(xmin, xmax, zmin, zmax);
     get_height();
     load_buffer();
