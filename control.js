@@ -61,6 +61,7 @@ const updateView = () => {
       wiremode = 2;
     }
     toggle_shaders();
+    r();
   }
   if (keyMaps["W"] === true) {
     at_vec[1] += 0.03;

@@ -54,13 +54,13 @@ window.onload = function init() {
   gl.viewport(0, 0, canvas.clientWidth, canvas.clientHeight);
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
-  gl.enable(gl.DEPTH_TEST);
-
+  
   // 
-
+  
   toggle_shaders();
-
-
+  
+  
+  gl.enable(gl.DEPTH_TEST);
   gl.useProgram(program);
 
   vertices = get_patch(xmin, xmax, zmin, zmax);
@@ -87,6 +87,16 @@ function toggle_shaders() {
   if (mode == 2) {
     program = initShaders(gl, "vertex-shader-p", "fragment-shader-p");
   }
+  gl.useProgram(program)
+}
+
+function r(){
+    projLoc = gl.getUniformLocation(program, "p");
+    mvLoc = gl.getUniformLocation(program, "mv");
+    if (mode != 1) {
+      normLoc = gl.getUniformLocation(program, "normMat");
+    }
+  
 }
 
 
@@ -173,6 +183,8 @@ function load_buffer() {
   let colorLoc = gl.getAttribLocation(program, "uColor");
   gl.vertexAttribPointer(colorLoc, 4, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(colorLoc);
+
+  
 }
 
 function render() {
