@@ -50,6 +50,9 @@ window.onload = function init() {
   gl.useProgram(program);
 
   vertices = get_patch(xmin, xmax, zmin, zmax);
+  
+  document.onkeydown = keyPressHandler;
+  document.onkeyup = keyReleaseHandler; 
 
   get_height();
   load_buffer();
